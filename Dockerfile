@@ -42,16 +42,6 @@ RUN  apt-get update \
         /usr/share/man/ \
         /tmp/*
 
-RUN  gpg --keyserver pgp.mit.edu --recv-keys 350200F2B999A372 \
-  && gpg --export --armor 350200F2B999A372 | apt-key add - \
-  && echo "deb http://debian.datastax.com/community stable main" | \
-     tee -a /etc/apt/sources.list.d/datastax.community.list \
-  && apt-get update \
-  && touch /etc/sudoers \
-  && apt-get -qq -y install --no-install-recommends datastax-agent \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
 ADD files/cassandra.list /etc/apt/sources.list.d/
 ENV CASSANDRA_AUTO_BOOTSTRAP=false
 
