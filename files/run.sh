@@ -17,6 +17,7 @@
 set -e
 CONF_DIR=/etc/cassandra
 CFG=$CONF_DIR/cassandra.yaml
+REPORT_CFG=$CONF_DIR/reporting.yaml
 
 # we are doing PetSet or just setting our seeds
 if [ -z "$CASSANDRA_SEEDS" ]; then
@@ -38,6 +39,7 @@ CASSANDRA_RACK="${CASSANDRA_RACK}"
 CASSANDRA_RING_DELAY="${CASSANDRA_RING_DELAY:-30000}"
 CASSANDRA_AUTO_BOOTSTRAP="${CASSANDRA_AUTO_BOOTSTRAP:-true}"
 CASSANDRA_SEEDS="${CASSANDRA_SEEDS:false}"
+CASSANDRA_REPORT_PORT=2003
 
 # Turn off JMX auth
 CASSANDRA_OPEN_JMX="${CASSANDRA_OPEN_JMX:-false}"
@@ -96,6 +98,28 @@ fi
 # enable RMI and JMX to work on one port
 echo "JVM_OPTS=\"\$JVM_OPTS -Djava.rmi.server.hostname=$POD_IP\"" >> $CONF_DIR/cassandra-env.sh
 
+# enable influxdb reporting if needed
+if [ ! -z "$CASSANDRA_REPORT_HOST" ]; then
+    echo "JVM_OPTS=\"\$JVM_OPTS -Dcassandra.metricsReporterConfigFile=${REPORT_CFG}\"" >> $CONF_DIR/cassandra-env.sh
+    CLASS_PATH=${CLASS_PATH}:/usr/share/cassandra/lib/metrics-graphite-2.2.0.jar:/usr/share/cassandra/lib/metrics-core-2.2.0.jar
+    cat > $REPORT_CFG <<EOF
+graphite:
+-
+  period: 20
+  timeunit: 'SECONDS'
+  prefix: '${HOSTNAME}'
+  hosts:
+  - host: '${CASSANDRA_REPORT_HOST}'
+    port: ${CASSANDRA_REPORT_PORT}
+  predicate:
+    color: "white"
+    useQualifiedName: true
+    patterns:
+    - ".*"
+EOF
+fi
+
+
 # getting WARNING messages with Migration Service
 echo "-Dcassandra.migration_task_wait_in_seconds=${CASSANDRA_MIGRATION_WAIT}" >> $CONF_DIR/jvm.options
 echo "-Dcassandra.ring_delay_ms=${CASSANDRA_RING_DELAY}" >> $CONF_DIR/jvm.options
@@ -122,5 +146,5 @@ echo CASSANDRA_RING_DELAY ${CASSANDRA_RING_DELAY}
 echo CASSANDRA_AUTO_BOOTSTRAP ${CASSANDRA_AUTO_BOOTSTRAP}
 echo CASSANDRA_SEEDS ${CASSANDRA_SEEDS}
 
-export CLASSPATH=/kubernetes-cassandra.jar
+export CLASS_PATH=$CLASS_PATH
 cassandra -f

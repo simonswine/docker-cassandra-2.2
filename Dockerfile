@@ -80,6 +80,11 @@ RUN  gpg --keyserver pgp.mit.edu --recv-keys F758CE318D77295D \
         /usr/share/man/ \
         /tmp/*
 
+
+# add metrics for influxdb
+ADD http://central.maven.org/maven2/io/dropwizard/metrics/metrics-graphite/3.1.2/metrics-graphite-3.1.2.jar /usr/share/cassandra/lib/
+ADD http://central.maven.org/maven2/io/dropwizard/metrics/metrics-core/3.1.2/metrics-core-3.1.2.jar /usr/share/cassandra/lib
+
 ADD files/logback.xml files/cassandra.yaml /etc/cassandra/
 ADD files/run.sh files/ready-probe.sh /
 RUN chmod a+rx /run.sh /dumb-init /ready-probe.sh
