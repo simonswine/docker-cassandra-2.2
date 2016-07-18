@@ -113,7 +113,7 @@ graphite:
     port: ${CASSANDRA_REPORT_PORT}
   predicate:
     color: "white"
-    useQualifiedName: true
+    useQualifiedName: false
     patterns:
     - ".*"
 EOF
